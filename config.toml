@@ -1,5 +1,5 @@
 interval = 5000  # 5 seconds
-stability_window = 10
+stability_window = 5
 
 [[hosts]]
 name = "App"

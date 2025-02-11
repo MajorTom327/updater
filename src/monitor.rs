@@ -4,6 +4,14 @@ use std::sync::Arc;
 use parking_lot::RwLock;
 use std::collections::{HashMap, VecDeque};
 use chrono::{DateTime, Utc};
+use std::io::{self, Write};
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum StabilityState {
+    Stable,
+    Unstable,
+    Unhealthy,
+}
 
 #[derive(Debug, Clone)]
 pub struct HealthStatus {
@@ -12,6 +20,18 @@ pub struct HealthStatus {
     pub build_at: Option<DateTime<Utc>>,
     pub error_message: Option<String>,
     pub build_stability: BuildStability,
+}
+
+impl HealthStatus {
+    pub fn get_state(&self) -> StabilityState {
+        if !self.is_healthy {
+            StabilityState::Unhealthy
+        } else if self.build_stability.is_stable {
+            StabilityState::Stable
+        } else {
+            StabilityState::Unstable
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -24,6 +44,7 @@ pub struct Monitor {
     status: Arc<RwLock<HashMap<String, HealthStatus>>>,
     build_history: Arc<RwLock<HashMap<String, VecDeque<DateTime<Utc>>>>>,
     stability_window: usize,
+    previous_states: Arc<RwLock<HashMap<String, StabilityState>>>,
 }
 
 impl Monitor {
@@ -32,6 +53,15 @@ impl Monitor {
             status: Arc::new(RwLock::new(HashMap::new())),
             build_history: Arc::new(RwLock::new(HashMap::new())),
             stability_window,
+            previous_states: Arc::new(RwLock::new(HashMap::new())),
+        }
+    }
+
+    fn notify_state_change(&self, host_name: &str, old_state: &StabilityState, new_state: &StabilityState) {
+        if (old_state == &StabilityState::Stable || new_state == &StabilityState::Stable) 
+            && old_state != new_state {
+            print!("\x07"); // ASCII bell character
+            io::stdout().flush().unwrap();
         }
     }
 
@@ -62,6 +92,7 @@ impl Monitor {
         let status = self.status.clone();
         let build_history = self.build_history.clone();
         let stability_window = self.stability_window;
+        let previous_states = self.previous_states.clone();
         
         tokio::spawn(async move {
             let client = reqwest::Client::new();
@@ -127,7 +158,7 @@ impl Monitor {
                             })
                         };
 
-                        HealthStatus {
+                        let health_status = HealthStatus {
                             last_check: now,
                             is_healthy,
                             build_at,
@@ -137,7 +168,24 @@ impl Monitor {
                             } else { 
                                 Some(format!("HTTP {}", status_code))
                             },
+                        };
+
+                        let new_state = health_status.get_state();
+                        let old_state = {
+                            let mut states = previous_states.write();
+                            let old = states.get(&host_name).cloned().unwrap_or(StabilityState::Unhealthy);
+                            states.insert(host_name.clone(), new_state.clone());
+                            old
+                        };
+
+                        if old_state != new_state {
+                            if old_state == StabilityState::Stable || new_state == StabilityState::Stable {
+                                print!("\x07"); // ASCII bell character
+                                io::stdout().flush().unwrap();
+                            }
                         }
+
+                        health_status
                     },
                     Err(e) => HealthStatus {
                         last_check: now,
