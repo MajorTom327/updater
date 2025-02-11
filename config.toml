@@ -1,0 +1,5 @@
+interval = 5000  # 5 seconds
+
+[[hosts]]
+name = "localhost"
+url = "http://localhost:8000"
