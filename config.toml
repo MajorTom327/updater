@@ -1,9 +1,9 @@
-interval = 5000  # 5 seconds
-stability_window = 5
+interval = 5000  # interval in ms between each check
+stability_window = 5 # Default is 5, it's the number of consecutive same value to consider the service as stable
 
 [[hosts]]
-name = "App"
-url = "http://localhost:8000"
+name = "App" # The name of the host to display
+url = "http://localhost:8000" # The url of the host to monitor
 
 [[hosts]]
 name = "Api"

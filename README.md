@@ -40,8 +40,7 @@ cargo run
 The config is a simple toml file that contains the hosts to monitor.
 
 ```toml
-[monitor]
-interval = 5000  # 5 seconds
+interval = 5000  # interval in ms between each check
 stability_window = 5 # Default is 5, it's the number of consecutive same value to consider the service as stable
 
 [[hosts]]
