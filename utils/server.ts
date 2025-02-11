@@ -5,7 +5,7 @@ import { serve } from "https://deno.land/std/http/server.ts";
 const handler = (req: Request): Response => {
   const now = new Date();
   const minutes = now.getMinutes();
-  const roundedMinutes = Math.floor(minutes / 5) * 5;
+  const roundedMinutes = Math.floor(minutes / 2) * 2;
   now.setMinutes(roundedMinutes);
   now.setSeconds(0);
   now.setMilliseconds(0);
