@@ -9,6 +9,7 @@ use chrono::{DateTime, Utc};
 pub struct HealthStatus {
     pub last_check: DateTime<Utc>,
     pub is_healthy: bool,
+    pub build_at: Option<DateTime<Utc>>,
     pub error_message: Option<String>,
 }
 
@@ -39,20 +40,40 @@ impl Monitor {
                 
                 let health_status = match result {
                     Ok(response) => {
-                        let is_healthy = response.status().is_success();
+                        let status_code = response.status();
+                        let is_healthy = status_code.is_success();
+                        let build_at = if is_healthy {
+                            match response.json::<serde_json::Value>().await {
+                                Ok(json) => {
+                                    json.get("buildAt")
+                                        .and_then(|v| v.as_str())
+                                        .and_then(|date_str| DateTime::parse_from_rfc3339(date_str).ok())
+                                        .map(|dt| dt.with_timezone(&Utc))
+                                },
+                                Err(e) => {
+                                    println!("Failed to parse JSON: {}", e);
+                                    None
+                                }
+                            }
+                        } else {
+                            None
+                        };
+
                         HealthStatus {
                             last_check: now,
                             is_healthy,
+                            build_at,
                             error_message: if is_healthy { 
                                 None 
                             } else { 
-                                Some(format!("HTTP {}", response.status()))
+                                Some(format!("HTTP {}", status_code))
                             },
                         }
                     },
                     Err(e) => HealthStatus {
                         last_check: now,
                         is_healthy: false,
+                        build_at: None,
                         error_message: Some(e.to_string()),
                     },
                 };
