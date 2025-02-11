@@ -4,7 +4,8 @@ use std::sync::Arc;
 use parking_lot::RwLock;
 use std::collections::{HashMap, VecDeque};
 use chrono::{DateTime, Utc};
-use std::io::{self, Write};
+use std::io::{self, Write, Cursor};
+use rodio::{OutputStream, Sink, Source};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum StabilityState {
@@ -57,11 +58,24 @@ impl Monitor {
         }
     }
 
+    fn play_notification_sound() {
+        // Include the audio file in the binary
+        const NOTIFICATION_SOUND: &[u8] = include_bytes!("../assets/notification.mp3");
+        
+        if let Ok((_stream, stream_handle)) = OutputStream::try_default() {
+            if let Ok(sink) = Sink::try_new(&stream_handle) {
+                if let Ok(source) = rodio::Decoder::new(Cursor::new(NOTIFICATION_SOUND)) {
+                    sink.append(source);
+                    sink.sleep_until_end();
+                }
+            }
+        }
+    }
+
     fn notify_state_change(&self, host_name: &str, old_state: &StabilityState, new_state: &StabilityState) {
         if (old_state == &StabilityState::Stable || new_state == &StabilityState::Stable) 
             && old_state != new_state {
-            print!("\x07"); // ASCII bell character
-            io::stdout().flush().unwrap();
+            Self::play_notification_sound();
         }
     }
 
@@ -180,8 +194,7 @@ impl Monitor {
 
                         if old_state != new_state {
                             if old_state == StabilityState::Stable || new_state == StabilityState::Stable {
-                                print!("\x07"); // ASCII bell character
-                                io::stdout().flush().unwrap();
+                                Self::play_notification_sound();
                             }
                         }
 
