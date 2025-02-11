@@ -1,5 +1,9 @@
 interval = 5000  # 5 seconds
 
 [[hosts]]
-name = "localhost"
+name = "8000"
 url = "http://localhost:8000"
+
+[[hosts]]
+name = "8001"
+url = "http://localhost:8001"

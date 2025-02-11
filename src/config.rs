@@ -4,14 +4,14 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct HostItem {
-    url: String,
-    name: String,
+    pub url: String,
+    pub name: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
-    interval: u64,
-    hosts: Vec<HostItem>
+    pub interval: u64,
+    pub hosts: Vec<HostItem>
 }
 
 impl Config {

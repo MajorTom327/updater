@@ -3,10 +3,18 @@
 import { serve } from "https://deno.land/std/http/server.ts";
 
 const handler = (req: Request): Response => {
-  const buildedAt = new Date().toISOString();
-  return new Response(JSON.stringify({ buildedAt }), {
+  const now = new Date();
+  const minutes = now.getMinutes();
+  const roundedMinutes = Math.floor(minutes / 5) * 5;
+  now.setMinutes(roundedMinutes);
+  now.setSeconds(0);
+  now.setMilliseconds(0);
+  const buildAt = now.toISOString();
+  return new Response(JSON.stringify({ buildAt }), {
     headers: { "Content-Type": "application/json" },
   });
 };
 
-serve(handler, { port: 8000 });
+const port = Number(Deno.args[0]) || 8000;
+console.log(`Starting server on port ${port}`);
+serve(handler, { port });
