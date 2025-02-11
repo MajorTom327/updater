@@ -11,13 +11,20 @@ pub struct HostItem {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
     pub interval: u64,
-    pub hosts: Vec<HostItem>
+    #[serde(default = "default_stability_window")]
+    pub stability_window: usize,
+    pub hosts: Vec<HostItem>,
+}
+
+fn default_stability_window() -> usize {
+    5
 }
 
 impl Config {
     pub fn new() -> Self {
         Self { 
             interval: 1000, // Default 1 second interval
+            stability_window: default_stability_window(),
             hosts: vec![] 
         }
     }

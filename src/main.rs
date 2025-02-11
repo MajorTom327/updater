@@ -100,7 +100,7 @@ async fn display_loop(monitor: Arc<Monitor>) {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let config = Config::load_from_file("config.toml")?;
-    let monitor = Arc::new(Monitor::new());
+    let monitor = Arc::new(Monitor::new(config.stability_window));
 
     // Start monitoring threads for each host
     for host in &config.hosts {

@@ -27,11 +27,11 @@ pub struct Monitor {
 }
 
 impl Monitor {
-    pub fn new() -> Self {
+    pub fn new(stability_window: usize) -> Self {
         Self {
             status: Arc::new(RwLock::new(HashMap::new())),
             build_history: Arc::new(RwLock::new(HashMap::new())),
-            stability_window: 5, // Consider last 5 builds for stability
+            stability_window,
         }
     }
 
