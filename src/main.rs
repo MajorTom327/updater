@@ -41,12 +41,12 @@ fn print_status_dashboard(monitor: &Monitor) {
     for (host_name, status) in hosts {
         let status_dot = if status.is_healthy {
             if status.build_stability.is_stable {
-                "●".green()
+                "✅".green()
             } else {
-                "●".yellow()
+                "⚠️".yellow()
             }
         } else {
-            "●".red()
+            "❌".red()
         };
 
         let build_info = status.build_at
